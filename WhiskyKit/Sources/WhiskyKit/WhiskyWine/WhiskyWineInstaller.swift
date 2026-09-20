@@ -31,6 +31,15 @@ public class WhiskyWineInstaller {
     /// URL to the installed `wine` `bin` directory
     public static let binFolder: URL = libraryFolder.appending(path: "Wine").appending(path: "bin")
 
+    /// The Gcenx Wine Staging build Moonshine installs
+    public static let wineVersion = SemanticVersion(11, 17, 0)
+
+    /// Download location of the Gcenx Wine Staging tarball
+    public static let wineDownloadURL = URL(
+        string: "https://github.com/Gcenx/macOS_Wine_builds/releases/download/"
+            + "11.17/wine-staging-11.17-osx64.tar.xz"
+    )
+
     public static func isWhiskyWineInstalled() -> Bool {
         return whiskyWineVersion() != nil
     }
@@ -71,7 +80,7 @@ public class WhiskyWineInstaller {
             let versionPlist = libraryFolder
                 .appending(path: "WhiskyWineVersion")
                 .appendingPathExtension("plist")
-            let versionInfo = WhiskyWineVersion(version: SemanticVersion(11, 2, 0))
+            let versionInfo = WhiskyWineVersion(version: wineVersion)
             let encoder = PropertyListEncoder()
             encoder.outputFormat = .xml
             let data = try encoder.encode(versionInfo)

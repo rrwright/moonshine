@@ -27,6 +27,7 @@ struct WhiskyWineDownloadView: View {
     @State private var downloadTask: URLSessionDownloadTask?
     @State private var observation: NSKeyValueObservation?
     @State private var startTime: Date?
+    @State private var downloadError: String?
     @Binding var tarLocation: URL
     @Binding var path: [SetupStage]
     var body: some View {
@@ -58,6 +59,13 @@ struct WhiskyWineDownloadView: View {
                     }
                 }
                 .padding(.horizontal)
+                if let downloadError = downloadError {
+                    Text(downloadError)
+                        .font(.subheadline)
+                        .foregroundStyle(.red)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
+                }
                 Spacer()
             }
             Spacer()
@@ -65,16 +73,19 @@ struct WhiskyWineDownloadView: View {
         .frame(width: 400, height: 200)
         .onAppear {
             Task {
-                let wineURL = "https://github.com/Gcenx/macOS_Wine_builds/"
-                    + "releases/download/11.2/wine-staging-11.2-osx64.tar.xz"
-                if let url: URL = URL(string: wineURL) {
-                    downloadTask = URLSession(configuration: .ephemeral).downloadTask(with: url) { url, _, _ in
+                if let url: URL = WhiskyWineInstaller.wineDownloadURL {
+                    downloadTask = URLSession(configuration: .ephemeral)
+                        .downloadTask(with: url) { url, response, error in
+                        let statusCode = (response as? HTTPURLResponse)?.statusCode ?? 0
                         Task.detached {
                             await MainActor.run {
-                                if let url = url {
-                                    tarLocation = url
-                                    proceed()
+                                guard let url = url, statusCode == 200 else {
+                                    downloadError = error?.localizedDescription
+                                        ?? "Wine download failed (HTTP \(statusCode))."
+                                    return
                                 }
+                                tarLocation = url
+                                proceed()
                             }
                         }
                     }
